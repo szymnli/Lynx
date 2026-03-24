@@ -1,0 +1,4 @@
+monitoring:
+  directories:
+    - ./tmp/tmp1
+    - ./tmp/tmp2
