@@ -1,5 +1,7 @@
+import os
 import sys
 
+from core.config import BASELINE_PATH
 from core.logger import Logger
 from monitors.file_integrity import (
     build_baseline,
@@ -44,6 +46,9 @@ def main():
         print(
             "Invalid argument. Use --baseline or -b to build a baseline or no arguments to start monitoring."
         )
+        sys.exit(1)
+    elif not os.path.exists(BASELINE_PATH):
+        print("Baseline file not found. Use --baseline or -b to build a baseline.")
         sys.exit(1)
 
     print(header)

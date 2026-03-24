@@ -99,11 +99,11 @@ def handle_events(logger, inotify, wd_to_path, watch_flags, baseline):
             print(f"[!] Watching new directory: '{path}'")
 
         # Complete event details
-        type = ", ".join(flag_names)
+        event_type = ", ".join(flag_names)
         details = f"{type} on '{event.name}' | full path: {path}"
 
         # Log the event
-        logger.log(severity, type, path, details)
+        logger.log(severity, event_type, path, details)
         print(details)
 
 
