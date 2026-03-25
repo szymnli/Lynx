@@ -1,6 +1,7 @@
 import os
 import sys
 
+from alerts.notifier import Notifier
 from core.config import BASELINE_PATH
 from core.logger import Logger
 from monitors.file_integrity import (
@@ -15,8 +16,9 @@ from monitors.file_integrity import (
 
 def main():
     """Main entry point for the Lynx system monitoring tool."""
-    # Initialize logger
+    # Initialize logger and notifier
     logger = Logger()
+    notifier = Notifier(logger)
 
     header = r"""
         __
@@ -31,17 +33,13 @@ def main():
         """
 
     # Handle baseline build argument
-    if len(sys.argv) == 2 and (sys.argv[1] == "--baseline" or sys.argv[1] == "-b"):
+    if len(sys.argv) == 2 and sys.argv[1] in ("--baseline", "-b"):
         print("Building baseline...")
-
-        # Build baseline and save it
         baseline = build_baseline()
-        save_baseline(logger, baseline)
-
+        save_baseline(notifier, baseline)
         print("Baseline saved.")
         print("Exiting...")
         sys.exit(0)
-    # Handle invalid arguments
     elif len(sys.argv) > 1:
         print(
             "Invalid argument. Use --baseline or -b to build a baseline or no arguments to start monitoring."
@@ -53,19 +51,17 @@ def main():
 
     print(header)
 
-    # Compare baseline before monitoring
     print("Comparing baseline...")
     baseline = compare_baseline()
     print("Baseline comparison complete.")
 
-    # Initiate monitoring
     print("Initiating monitoring...")
     inotify, wd_to_path, watch_flags = start_monitoring()
 
     while True:
         try:
             # Read events from inotify and process them
-            handle_events(logger, inotify, wd_to_path, watch_flags, baseline)
+            handle_events(notifier, inotify, wd_to_path, watch_flags, baseline)
         except KeyboardInterrupt:
             # Clean up inotify watches on exit
             print("\nExiting...")

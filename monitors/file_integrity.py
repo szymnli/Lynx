@@ -4,6 +4,7 @@ import os
 
 from inotify_simple import INotify, flags
 
+from alerts.alert import Alert
 from core.config import ACTIVITY_DIRS, BASELINE_PATH, INTEGRITY_DIRS
 
 
@@ -25,12 +26,18 @@ def build_baseline(directories=INTEGRITY_DIRS):
     return baseline
 
 
-def save_baseline(logger, baseline, path=BASELINE_PATH):
+def save_baseline(notifier, baseline, path=BASELINE_PATH):
     """Save the baseline of file hashes to disk."""
     with open(path, "w") as f:
         json.dump(baseline, f, indent=2)
-    # Log the baseline checkpoint
-    logger.log_baseline_checkpoint(BASELINE_PATH)
+    checkpoint = Alert(
+        severity="LOW",
+        event_type="BASELINE_CHECKPOINT",
+        location=path,
+        source="system",
+        context={"file_count": len(baseline)},
+    )
+    notifier.notify(checkpoint)
 
 
 def compare_baseline():
@@ -64,33 +71,30 @@ def start_monitoring():
     return inotify, wd_to_path, watch_flags
 
 
-def handle_events(logger, inotify, wd_to_path, watch_flags, baseline):
+def handle_events(notifier, inotify, wd_to_path, watch_flags, baseline):
     """Handle events from inotify and compare them against the baseline."""
     # Read events from inotify and process them
     events = inotify.read()
     for event in events:
-        # Extract flag names from the event mask
         flag_names = [f.name for f in flags.from_mask(event.mask)]
+        path = os.path.join(wd_to_path[event.wd], event.name)
+        event_type = ", ".join(flag_names)
 
         # Set default severity and path
         severity = "LOW"
-        path = os.path.join(wd_to_path[event.wd], event.name)
-
         # Check if the path is in the baseline and update severity if it is
         if path in baseline:
             severity = "HIGH"
 
         # If a baseline hash exists for the path, check if it has been modified
-        if "MODIFY" in flag_names:
-            if path in baseline:
-                try:
-                    with open(path, "rb") as f:
-                        current_hash = hashlib.sha256(f.read()).hexdigest()
-                    if current_hash != baseline[path]:
-                        print(f"[ALERT] {path} has been modified!")
-                        severity = "CRITICAL"
-                except (PermissionError, OSError):
-                    pass
+        if "MODIFY" in flag_names and path in baseline:
+            try:
+                with open(path, "rb") as f:
+                    current_hash = hashlib.sha256(f.read()).hexdigest()
+                if current_hash != baseline[path]:
+                    severity = "CRITICAL"
+            except (PermissionError, OSError):
+                pass
 
         # Watch new directories automatically
         if "CREATE" in flag_names and event.mask & flags.ISDIR:
@@ -98,13 +102,20 @@ def handle_events(logger, inotify, wd_to_path, watch_flags, baseline):
             wd_to_path[wd] = path
             print(f"[!] Watching new directory: '{path}'")
 
-        # Complete event details
-        event_type = ", ".join(flag_names)
-        details = f"{type} on '{event.name}' | full path: {path}"
+        context = {
+            "filename": event.name,
+            "inotify_flags": flag_names,
+            "in_baseline": path in baseline,
+        }
 
-        # Log the event
-        logger.log(severity, event_type, path, details)
-        print(details)
+        alert = Alert(
+            severity=severity,
+            event_type=event_type,
+            location=path,
+            source="file_integrity",
+            context=context,
+        )
+        notifier.notify(alert)
 
 
 def cleanup(inotify, wd_to_path):

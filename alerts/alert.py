@@ -7,11 +7,10 @@ class Alert:
         self.severity = severity  # LOW / MEDIUM / HIGH / CRITICAL
         self.event_type = event_type  # CREATE / DELETE / MODIFY / DELETE_SELF / ...
         self.location = location
-        self.source = source  # Which monitor
+        self.source = source  # which monitor raised this
         self.context = context or {}
 
     def to_dict(self):
-        """Return a dictionary representation of the alert."""
         return {
             "timestamp": self.timestamp,
             "severity": self.severity,
@@ -22,5 +21,4 @@ class Alert:
         }
 
     def summary(self):
-        """Return a summary string of the alert."""
-        return f"{self.severity} - {self.event_type} - {self.location} - {self.source}"
+        return f"[{self.severity}] {self.source}: {self.event_type} on {self.location}"
