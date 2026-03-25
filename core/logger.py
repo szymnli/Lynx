@@ -5,11 +5,11 @@ from core.config import LOG_FILE
 
 
 class Log:
-    def __init__(self, severity, event_type, path, details):
+    def __init__(self, severity, event_type, location, details):
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         self.severity = severity  # LOW / MEDIUM / HIGH / CRITICAL
         self.event_type = event_type  # CREATE / DELETE / MODIFY / DELETE_SELF / ...
-        self.path = path
+        self.location = location
         self.details = details
 
     def to_dict(self):
@@ -17,8 +17,8 @@ class Log:
         return {
             "timestamp": self.timestamp,
             "severity": self.severity,
-            "type": self.event_type,
-            "path": self.path,
+            "event_type": self.event_type,
+            "location": self.location,
             "details": self.details,
         }
 
@@ -27,9 +27,9 @@ class Logger:
     def __init__(self, log_file=LOG_FILE):
         self.log_file = log_file
 
-    def log(self, severity, event_type, path, details):
+    def log(self, severity, event_type, location, details):
         """Log an event to the log file."""
-        entry = Log(severity, event_type, path, details)
+        entry = Log(severity, event_type, location, details)
         with open(self.log_file, "a") as f:
             json.dump(entry.to_dict(), f, indent=4)
             f.write("\n")
@@ -40,7 +40,7 @@ class Logger:
         self.log(
             severity="LOW",
             event_type="BASELINE_CHECKPOINT",
-            path=baseline_path,
+            location=baseline_path,
             details="Created a baseline checkpoint",
         )
 
