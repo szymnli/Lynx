@@ -34,8 +34,12 @@ def main():
 
     # Handle baseline build argument
     if len(sys.argv) == 2 and sys.argv[1] in ("--baseline", "-b"):
-        os.mkdir("data")
-        os.mkdir("logs")
+        # Make directories if not present
+        try:
+            os.mkdir("data")
+            os.mkdir("logs")
+        except OSError:
+            pass
         print("Building baseline...")
         baseline = build_baseline()
         save_baseline(notifier, baseline)
