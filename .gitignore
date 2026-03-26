@@ -1,8 +1,8 @@
 # Logs
-logs/
+*.log
 
 # Generated baseline data (machine-specific)
-data/baseline.json
+baseline.json
 
 # Virtual environment
 venv/
