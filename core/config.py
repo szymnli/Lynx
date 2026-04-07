@@ -14,6 +14,9 @@ BASELINE_PATH = config["data"]["baseline_path"]
 # Get the path to the log file
 LOG_FILE = config["data"]["log_file"]
 
+# Deleted binary whitelist
+DELETED_BINARY_WHITELIST = config["monitoring"]["deleted_binary_whitelist"]
+
 # Get user monitoring settings
-FAILURE_THRESHOLD = config["user"]["failure_threshold"]
-FAILURE_WINDOW_SECONDS = config["user"]["failure_window_seconds"]
+FAILURE_THRESHOLD = config["monitoring"]["user"]["failure_threshold"]
+FAILURE_WINDOW_SECONDS = config["monitoring"]["user"]["failure_window_seconds"]

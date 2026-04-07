@@ -2,6 +2,7 @@ import os
 import stat
 
 from alerts.alert import Alert
+from core.config import DELETED_BINARY_WHITELIST
 
 
 def get_process_snapshot() -> dict:
@@ -69,6 +70,10 @@ def check_new_processes(old_snapshot, new_snapshot, notifier):
 def check_deleted_binaries(snapshot, notifier):
     """Check for deleted binaries in the snapshot and notify if found."""
     for pid, proc in snapshot.items():
+        if not proc["exe"].endswith(" (deleted)"):
+            continue
+        if any(w in proc["exe"] for w in DELETED_BINARY_WHITELIST):
+            continue
         if proc["exe"].endswith(" (deleted)"):
             alert = Alert(
                 severity="CRITICAL",

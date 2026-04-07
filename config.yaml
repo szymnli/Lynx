@@ -9,6 +9,9 @@ monitoring:
   activity: # events logged but not hashed
     - tmp # just tmp for testing
     - /etc/
+  deleted_binary_whitelist:
+    - zed
+    - ruff
   user:
     failure_threshold: 3
     failure_window_seconds: 60
