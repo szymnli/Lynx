@@ -1,5 +1,12 @@
 import os
 import sys
+from collections import defaultdict
+
+from monitors.user_monitor import (
+    check_sudo_failures,
+    read_new_lines,
+    start_journal_stream,
+)
 
 from alerts.notifier import Notifier
 from core.config import BASELINE_PATH, INTEGRITY_DIRS
@@ -75,10 +82,18 @@ def main():
     suid_baseline = build_suid_baseline(INTEGRITY_DIRS)
     print("Process snapshot taken...")
 
+    print("Starting journal stream")
+    journal_stream = start_journal_stream()
+    failure_tracker = defaultdict(list)
+    print("User monitor online")
+
     while True:
         try:
             # Read events from inotify and process them
             handle_events(notifier, inotify, wd_to_path, watch_flags, baseline)
+
+            new_lines = read_new_lines(journal_stream)
+            check_sudo_failures(new_lines, failure_tracker, notifier)
 
             new_snapshot = get_process_snapshot()
             check_new_processes(old_snapshot, new_snapshot, notifier)
