@@ -1,2 +1,4 @@
+cysystemd==2.0.5
 inotify-simple==2.0.1
 PyYAML==6.0.3
+systemd==0.17.1

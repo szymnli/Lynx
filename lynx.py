@@ -1,8 +1,9 @@
 import os
 import sys
+from collections import defaultdict
 
 from alerts.notifier import Notifier
-from core.config import BASELINE_PATH
+from core.config import BASELINE_PATH, INTEGRITY_DIRS
 from core.logger import Logger
 from monitors.file_integrity import (
     build_baseline,
@@ -11,6 +12,18 @@ from monitors.file_integrity import (
     handle_events,
     save_baseline,
     start_monitoring,
+)
+from monitors.processes import (
+    build_suid_baseline,
+    check_deleted_binaries,
+    check_new_processes,
+    check_suid_binaries,
+    get_process_snapshot,
+)
+from monitors.user import (
+    check_sudo_failures,
+    read_new_lines,
+    start_journal_stream,
 )
 
 
@@ -34,6 +47,12 @@ def main():
 
     # Handle baseline build argument
     if len(sys.argv) == 2 and sys.argv[1] in ("--baseline", "-b"):
+        # Make directories if not present
+        try:
+            os.mkdir("data")
+            os.mkdir("logs")
+        except OSError:
+            pass
         print("Building baseline...")
         baseline = build_baseline()
         save_baseline(notifier, baseline)
@@ -57,11 +76,29 @@ def main():
 
     print("Initiating monitoring...")
     inotify, wd_to_path, watch_flags = start_monitoring()
+    print("Taking process snapshot...")
+    old_snapshot = get_process_snapshot()
+    suid_baseline = build_suid_baseline(INTEGRITY_DIRS)
+    print("Process snapshot taken...")
+
+    print("Starting journal stream")
+    journal_stream = start_journal_stream()
+    failure_tracker = defaultdict(list)
+    print("User monitor online")
 
     while True:
         try:
             # Read events from inotify and process them
             handle_events(notifier, inotify, wd_to_path, watch_flags, baseline)
+
+            new_lines = read_new_lines(journal_stream)
+            check_sudo_failures(new_lines, failure_tracker, notifier)
+
+            new_snapshot = get_process_snapshot()
+            check_new_processes(old_snapshot, new_snapshot, notifier)
+            check_deleted_binaries(new_snapshot, notifier)
+            check_suid_binaries(suid_baseline, INTEGRITY_DIRS, notifier)
+            old_snapshot = new_snapshot
         except KeyboardInterrupt:
             # Clean up inotify watches on exit
             print("\nExiting...")
