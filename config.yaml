@@ -18,3 +18,5 @@ monitoring:
 data:
   baseline_path: ./data/baseline.json
   log_file: logs/lynx.log
+alerts:
+  notify_send_path: /usr/bin/notify-send

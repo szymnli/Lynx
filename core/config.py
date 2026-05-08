@@ -20,3 +20,6 @@ DELETED_BINARY_WHITELIST = config["monitoring"]["deleted_binary_whitelist"]
 # Get user monitoring settings
 FAILURE_THRESHOLD = config["monitoring"]["user"]["failure_threshold"]
 FAILURE_WINDOW_SECONDS = config["monitoring"]["user"]["failure_window_seconds"]
+
+# Get alert settings
+NOTIFY_SEND_PATH = config["alerts"]["notify_send_path"]

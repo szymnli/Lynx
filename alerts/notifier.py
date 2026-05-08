@@ -1,3 +1,9 @@
+import os
+import subprocess
+
+from core.config import NOTIFY_SEND_PATH
+
+
 class Notifier:
     def __init__(self, logger):
         self.logger = logger
@@ -12,7 +18,20 @@ class Notifier:
             self._desktop_notify(alert)  # desktop for CRITICAL only
 
     def _desktop_notify(self, alert):
-        # TODO: implement with notify2 or plyer
-        # title = f"Lynx Alert: {alert.event_type}"
-        # body = alert.summary()
-        pass
+        uid = os.environ.get("SUDO_UID")
+        if not uid:
+            return
+
+        env = os.environ.copy()
+        env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path=/run/user/{uid}/bus"
+
+        subprocess.run(
+            [
+                NOTIFY_SEND_PATH,
+                f"Lynx: {alert.event_type}",
+                alert.summary(),
+                "--urgency=critical",
+            ],
+            env=env,
+            check=False,  # silent fail
+        )
