@@ -10,7 +10,7 @@ class Logger:
     def log_alert(self, alert):
         """Write an alert to the log file."""
         with open(self.log_file, "a") as f:
-            json.dump(alert.to_dict(), f, indent=4)
+            json.dump(alert.to_dict(), f)
             f.write("\n")
 
     def read_logs(self):
@@ -20,3 +20,9 @@ class Logger:
                 return [json.loads(line) for line in f if line.strip()]
         except FileNotFoundError:
             return []
+
+    def filter_logs(self, n=20, severity=None):
+        logs = self.read_logs()
+        if severity:
+            logs = [log for log in logs if log["severity"] == severity]
+        return list(reversed(logs[-n:]))
