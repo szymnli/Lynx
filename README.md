@@ -24,8 +24,8 @@ Work in progress.
 ## Usage
 
 ```bash
-git clone https://github.com/szymnli/lynx.git
-cd lynx
+git clone https://github.com/szymnli/Lynx.git
+cd Lynx
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
