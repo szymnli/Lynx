@@ -1,6 +1,6 @@
 # Lynx
 
-A Python daemon that watches your Linux system for signs of compromise. File changes, suspicious processes, sudo abuse. ALl logged and alerted on in real time.
+A Python daemon that watches your Linux system for signs of compromise. File changes, suspicious processes, sudo abuse. All logged and alerted on in real time.
 
 Work in progress.
 
@@ -12,14 +12,13 @@ Work in progress.
 
 **User monitoring** — real-time `journalctl` streaming to catch sudo failures, with a configurable window and threshold for brute-force detection. Sudoers file changes are caught via inotify on `/etc/`.
 
-**Alert routing** — JSON log for everything, console output for HIGH+, desktop notifications for CRITICAL (stubbed, not yet wired up).
+**Alert routing** — JSON log for everything, console output for HIGH+, desktop notifications for CRITICAL events.
+
+**CLI** — `--logs` for viewing recent alerts with optional count and severity filtering, `--help` for usage info.
 
 ## What's not done yet
 
-- Working desktop notifications
 - systemd service file
-- `--logs` CLI flag for reading recent alerts without grepping raw JSON,
-- deleted-binary whitelist in `config.yaml`
 - Rootkit detection
 
 ## Usage
@@ -35,3 +34,21 @@ sudo venv/bin/python lynx.py
 ```
 
 Needs root to read other users' `/proc` entries and stream from journald.
+
+## CLI reference
+
+| Flag | Description |
+|------|-------------|
+| `-b`, `--baseline` | Build a fresh SHA-256 baseline of watched files. Run once before starting. |
+| `-l [N]`, `--logs [N]` | Show last N alerts from the log (default: 20). |
+| `-s LEVEL`, `--severity LEVEL` | Use with `--logs` to filter by severity: LOW, MEDIUM, HIGH, CRITICAL. |
+| `-h`, `--help` | Show usage information. |
+
+**Examples:**
+
+```bash
+sudo venv/bin/python lynx.py -l
+sudo venv/bin/python lynx.py -l 50
+sudo venv/bin/python lynx.py -l --severity CRITICAL
+sudo venv/bin/python lynx.py -l 50 -s HIGH
+```
