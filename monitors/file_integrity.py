@@ -95,6 +95,8 @@ def handle_events(notifier, inotify, wd_to_path, watch_flags, baseline):
             event_type = "SUDOERS_MODIFIED"
             severity = "CRITICAL"
 
+        contents_changed = False
+
         # If a baseline hash exists for the path, check if it has been modified
         if ("MODIFY" in flag_names or "ATTRIB" in flag_names) and path in baseline:
             severity = "CRITICAL"
@@ -102,8 +104,7 @@ def handle_events(notifier, inotify, wd_to_path, watch_flags, baseline):
                 with open(path, "rb") as f:
                     current_hash = hashlib.sha256(f.read()).hexdigest()
                 if current_hash != baseline[path]:
-                    ...
-                    # context["contents_changed"] = True
+                    contents_changed = True
             except (PermissionError, OSError):
                 pass
 
@@ -117,6 +118,7 @@ def handle_events(notifier, inotify, wd_to_path, watch_flags, baseline):
             "filename": event.name,
             "inotify_flags": flag_names,
             "in_baseline": path in baseline,
+            "contents_changed": contents_changed,
         }
 
         alert = Alert(
